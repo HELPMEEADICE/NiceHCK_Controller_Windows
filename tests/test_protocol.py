@@ -1,5 +1,10 @@
-from desktop_gui.core.models import AncMode, CodecMode, EqMode
-from desktop_gui.core.protocol import (
+from pathlib import Path
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from core.models import AncMode, CodecMode, EqMode
+from core.protocol import (
     PacketStreamParser,
     ParsedMessage,
     Op,
