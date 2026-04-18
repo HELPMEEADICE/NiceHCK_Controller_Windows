@@ -77,3 +77,5 @@ AAC、LHDC、SBC 随心切换（能不能切成功，得看你耳机的“身体
 这个项目纯粹是为了自用方便。如果你也是原道铁粉，希望它能让你在 Windows 上的体验稍微好那么一点点。
 
 **Happy Listening!** 🎧
+
+- 感谢原道开源：NiceHCK Controller https://github.com/ZaeXT/NiceHCK_Controller
