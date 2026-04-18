@@ -78,4 +78,4 @@ AAC、LHDC、SBC 随心切换（能不能切成功，得看你耳机的“身体
 
 **Happy Listening!** 🎧
 
-- 感谢原道开源：NiceHCK Controller https://github.com/ZaeXT/NiceHCK_Controller
+感谢开源项目：NiceHCK Controller https://github.com/ZaeXT/NiceHCK_Controller
