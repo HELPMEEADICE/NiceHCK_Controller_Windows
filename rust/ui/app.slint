@@ -1,0 +1,366 @@
+import { Button, ComboBox, Switch, TextEdit } from "std-widgets.slint";
+
+component Panel inherits Rectangle {
+    background: #ffffff;
+    border-color: #dfe3e8;
+    border-width: 1px;
+    border-radius: 8px;
+}
+
+component SectionTitle inherits Text {
+    color: #20242a;
+    font-size: 16px;
+    font-weight: 700;
+    vertical-alignment: center;
+}
+
+component MetaLabel inherits Text {
+    color: #6a717b;
+    font-size: 12px;
+}
+
+component BatteryMeter inherits Rectangle {
+    in property <string> title;
+    in property <string> value-text;
+    in property <float> progress;
+
+    background: #f4f6f8;
+    border-radius: 6px;
+    min-width: 72px;
+    height: 72px;
+
+    VerticalLayout {
+        padding: 10px;
+        spacing: 6px;
+
+        HorizontalLayout {
+            Text {
+                text: root.title;
+                color: #555d68;
+                font-size: 12px;
+            }
+            Text {
+                text: root.value-text;
+                color: #20242a;
+                font-size: 12px;
+                font-weight: 700;
+                horizontal-alignment: right;
+            }
+        }
+
+        Rectangle {
+            height: 7px;
+            background: #d9dee4;
+            border-radius: 4px;
+
+            Rectangle {
+                width: parent.width * max(0, min(1, root.progress));
+                height: parent.height;
+                background: root.progress < 0.2 ? #c63c3c : root.progress < 0.6 ? #b07800 : #16845b;
+                border-radius: 4px;
+            }
+        }
+    }
+}
+
+export component MainWindow inherits Window {
+    title: "NiceHCK Controller";
+    preferred-width: 940px;
+    preferred-height: 720px;
+    min-width: 760px;
+    min-height: 640px;
+    background: #f3f5f7;
+    default-font-family: "Microsoft YaHei UI";
+
+    in-out property <string> connection-status: "未连接";
+    in-out property <string> device-name: "未连接";
+    in-out property <string> endpoint: "-";
+    in-out property <string> firmware: "未知";
+    in-out property <string> codec-status: "-";
+    in-out property <string> left-battery: "-";
+    in-out property <string> right-battery: "-";
+    in-out property <string> case-battery: "-";
+    in-out property <float> left-progress: 0;
+    in-out property <float> right-progress: 0;
+    in-out property <float> case-progress: 0;
+    in-out property <int> anc-index: 0;
+    in-out property <int> eq-index: 1;
+    in-out property <int> codec-index: 0;
+    in-out property <bool> game-mode: false;
+    in-out property <bool> low-latency: false;
+    in-out property <bool> connected: false;
+    in-out property <bool> connecting: false;
+    in-out property <bool> codec-enabled: false;
+    in-out property <bool> modern-codec: false;
+    in-out property <bool> extended-eq: false;
+    in-out property <string> log-text: "";
+    in-out property <string> error-message: "";
+
+    callback connect-requested;
+    callback disconnect-requested;
+    callback refresh-requested;
+    callback apply-anc(int);
+    callback apply-eq(int);
+    callback apply-codec(int);
+    callback set-game-mode(bool);
+    callback set-low-latency(bool);
+    callback clear-log;
+    callback dismiss-error;
+
+    VerticalLayout {
+        padding: 22px;
+        spacing: 14px;
+
+        HorizontalLayout {
+            height: 54px;
+
+            VerticalLayout {
+                spacing: 1px;
+                Text {
+                    text: "NiceHCK Controller";
+                    color: #161a1f;
+                    font-size: 22px;
+                    font-weight: 800;
+                }
+                Text {
+                    text: "Windows 原生蓝牙耳机控制器 · Rust";
+                    color: #68717d;
+                    font-size: 12px;
+                }
+            }
+
+            Rectangle {
+                width: 98px;
+                height: 30px;
+                background: root.connected ? #dff3e9 : root.connecting ? #fff0c7 : #e7eaee;
+                border-radius: 6px;
+                Text {
+                    text: root.connection-status;
+                    color: root.connected ? #126844 : root.connecting ? #805b00 : #5d6570;
+                    font-size: 12px;
+                    font-weight: 700;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+            }
+        }
+
+        if root.error-message != "": Rectangle {
+            height: 42px;
+            background: #fce8e8;
+            border-color: #e8b3b3;
+            border-width: 1px;
+            border-radius: 6px;
+            HorizontalLayout {
+                padding-left: 12px;
+                spacing: 8px;
+                Text {
+                    text: root.error-message;
+                    color: #8d2424;
+                    font-size: 12px;
+                    overflow: elide;
+                    vertical-alignment: center;
+                }
+                Button {
+                    text: "关闭";
+                    width: 64px;
+                    clicked => { root.dismiss-error(); }
+                }
+            }
+        }
+
+        HorizontalLayout {
+            spacing: 14px;
+            vertical-stretch: 1;
+
+            Panel {
+                preferred-width: 330px;
+                horizontal-stretch: 1;
+                VerticalLayout {
+                    padding: 18px;
+                    spacing: 12px;
+
+                    SectionTitle { text: "设备状态"; }
+
+                    VerticalLayout {
+                        spacing: 4px;
+                        MetaLabel { text: "设备"; }
+                        Text { text: root.device-name; color: #252a31; font-size: 14px; overflow: elide; }
+                    }
+                    VerticalLayout {
+                        spacing: 4px;
+                        MetaLabel { text: "连接通道"; }
+                        Text { text: root.endpoint; color: #252a31; font-size: 13px; overflow: elide; }
+                    }
+
+                    HorizontalLayout {
+                        spacing: 12px;
+                        VerticalLayout {
+                            spacing: 4px;
+                            MetaLabel { text: "固件"; }
+                            Text { text: root.firmware; color: #252a31; font-size: 14px; }
+                        }
+                        VerticalLayout {
+                            spacing: 4px;
+                            MetaLabel { text: "上次编码指令"; }
+                            Text { text: root.codec-status; color: #252a31; font-size: 14px; }
+                        }
+                    }
+
+                    MetaLabel { text: "电量"; }
+                    HorizontalLayout {
+                        spacing: 8px;
+                        BatteryMeter { title: "左耳"; value-text: root.left-battery; progress: root.left-progress; }
+                        BatteryMeter { title: "耳机盒"; value-text: root.case-battery; progress: root.case-progress; }
+                        BatteryMeter { title: "右耳"; value-text: root.right-battery; progress: root.right-progress; }
+                    }
+
+                    Rectangle { vertical-stretch: 1; }
+
+                    HorizontalLayout {
+                        spacing: 8px;
+                        Button {
+                            text: root.connecting ? "连接中..." : "自动连接";
+                            enabled: !root.connected && !root.connecting;
+                            clicked => { root.connect-requested(); }
+                        }
+                        Button {
+                            text: "刷新";
+                            enabled: root.connected;
+                            clicked => { root.refresh-requested(); }
+                        }
+                        Button {
+                            text: "断开";
+                            enabled: root.connected;
+                            clicked => { root.disconnect-requested(); }
+                        }
+                    }
+                }
+            }
+
+            Panel {
+                preferred-width: 500px;
+                horizontal-stretch: 2;
+                VerticalLayout {
+                    padding: 18px;
+                    spacing: 10px;
+
+                    SectionTitle { text: "声音与延迟"; }
+
+                    VerticalLayout {
+                        spacing: 5px;
+                        MetaLabel { text: "降噪模式"; }
+                        HorizontalLayout {
+                            spacing: 8px;
+                            ComboBox {
+                                model: ["关闭", "通透", "普通降噪", "深度降噪", "试验性降噪", "风噪抑制"];
+                                current-index <=> root.anc-index;
+                                enabled: root.connected;
+                            }
+                            Button {
+                                text: "应用";
+                                width: 76px;
+                                enabled: root.connected;
+                                clicked => { root.apply-anc(root.anc-index); }
+                            }
+                        }
+                    }
+
+                    VerticalLayout {
+                        spacing: 5px;
+                        MetaLabel { text: "均衡器"; }
+                        HorizontalLayout {
+                            spacing: 8px;
+                            ComboBox {
+                                model: root.extended-eq ? ["悔恨之泪", "均衡中正", "欧美澎湃", "真律还原", "游戏优化", "细腻佳音", "温婉人声"] : ["悔恨之泪", "均衡中正", "欧美澎湃", "真律还原", "游戏优化"];
+                                current-index <=> root.eq-index;
+                                enabled: root.connected;
+                            }
+                            Button {
+                                text: "应用";
+                                width: 76px;
+                                enabled: root.connected;
+                                clicked => { root.apply-eq(root.eq-index); }
+                            }
+                        }
+                    }
+
+                    VerticalLayout {
+                        spacing: 5px;
+                        MetaLabel { text: "蓝牙编码（切换后设备可能短暂重连）"; }
+                        HorizontalLayout {
+                            spacing: 8px;
+                            ComboBox {
+                                model: root.modern-codec ? ["AAC", "LHDC", "SBC"] : ["AAC", "LHDC"];
+                                current-index <=> root.codec-index;
+                                enabled: root.connected && root.codec-enabled;
+                            }
+                            Button {
+                                text: "应用";
+                                width: 76px;
+                                enabled: root.connected && root.codec-enabled;
+                                clicked => { root.apply-codec(root.codec-index); }
+                            }
+                        }
+                    }
+
+                    Rectangle { height: 1px; background: #e5e8ec; }
+
+                    HorizontalLayout {
+                        VerticalLayout {
+                            spacing: 2px;
+                            Text { text: "游戏模式"; color: #252a31; font-size: 14px; font-weight: 600; }
+                            MetaLabel { text: "优化游戏场景下的声音表现"; }
+                        }
+                        Switch {
+                            checked <=> root.game-mode;
+                            enabled: root.connected;
+                            toggled => { root.set-game-mode(root.game-mode); }
+                        }
+                    }
+
+                    HorizontalLayout {
+                        VerticalLayout {
+                            spacing: 2px;
+                            Text { text: "低延迟模式"; color: #252a31; font-size: 14px; font-weight: 600; }
+                            MetaLabel { text: "降低蓝牙音频传输延迟"; }
+                        }
+                        Switch {
+                            checked <=> root.low-latency;
+                            enabled: root.connected;
+                            toggled => { root.set-low-latency(root.low-latency); }
+                        }
+                    }
+
+                    Rectangle { vertical-stretch: 1; }
+                }
+            }
+        }
+
+        Panel {
+            height: 160px;
+            vertical-stretch: 0;
+            VerticalLayout {
+                padding: 14px;
+                spacing: 8px;
+                HorizontalLayout {
+                    height: 30px;
+                    SectionTitle { text: "运行日志"; font-size: 14px; }
+                    Button {
+                        text: "清空";
+                        width: 68px;
+                        clicked => { root.clear-log(); }
+                    }
+                }
+                log-view := TextEdit {
+                    text: root.log-text;
+                    read-only: true;
+                    wrap: word-wrap;
+                    font-family: "Consolas";
+                    font-size: 11px;
+                    viewport-y: max(0px, self.viewport-height - self.visible-height);
+                }
+            }
+        }
+    }
+}

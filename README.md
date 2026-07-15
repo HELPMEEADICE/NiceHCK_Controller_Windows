@@ -1,83 +1,58 @@
-# NiceHCK Desktop Controller：原道蓝牙耳机桌面控制器
+# NiceHCK Controller
 
-**“早知道，还是原道。”**
+NiceHCK / 原道蓝牙耳机的 Windows 原生桌面控制器，使用 Rust 和 Slint 构建。
 
-可既然原道这么香，凭什么只有安卓手机能调设置？在 Windows 上想切个降噪、换个 EQ，还得满世界找安卓手机连上去改？
+## 功能
 
-因为实在受不了这种玄学操作，我直接手搓了这个 Windows 桌面控制器。它能让你在 PC 上优雅地控制你的 NiceHCK 耳机，告别繁琐，回归简单。
+- 自动发现已配对设备，优先使用原生 RFCOMM，失败后回退到串口 SPP
+- ANC、EQ、AAC/LHDC/SBC 编码切换
+- 游戏模式和低延迟模式
+- 左耳、右耳和充电盒电量显示
+- 根据固件版本限制不支持的 EQ 和编码选项
+- 收发数据与错误日志
 
-<img src="./APP.png" alt="APP" />
+## 环境
 
-## ✨ 核心亮点
+- Windows 10/11
+- Rust 1.85 或更新版本
+- 已在 Windows 设置中配对的 NiceHCK / 原道耳机
 
-- **全自动连接**：别再手动找 COM 口了。程序会自动搜寻配对过的 NiceHCK 设备，先尝试 **RFCOMM**（原生蓝牙通道），失败了会自动回退到 **串口 SPP**，总之能连上就是好代码。
-- **配置全覆盖**：ANC 模式切换、EQ 预设、编码选择、游戏模式、低延迟……你能想到的控制项，我都摆在桌面上了。
-- **固件智能适配**：程序会根据固件版本自动调整界面功能。旧版本不支持的功能会自动隐藏，不该点的地方绝对不让你乱点。
-- **透明式日志**：到底发了什么指令？设备回了什么字节？日志区写得清清楚楚。拒绝黑盒，欢迎排错。
+## 运行
 
----
+```powershell
+cd rust
+cargo run
+```
 
-## 🏗 项目结构（一眼看穿代码）
+## 构建
+
+```powershell
+cd rust
+cargo build --release
+```
+
+生成的程序位于 `rust/target/release/nicehck-controller.exe`。
+
+## 验证
+
+```powershell
+cd rust
+cargo fmt --check
+cargo clippy --all-targets -- -D warnings
+cargo test
+```
+
+## 项目结构
 
 ```text
-.
-├─app.py                     # UI 逻辑入口（Tkinter 写的，主打一个轻量）
-├─main.py                    # 启动脚本
-├─core/                      # 核心心脏：控制流程、状态同步、协议编解码
-├─transport/                 # 通信层：支持原生 RFCOMM 和串口 SPP 双路径
-├─ui/                        # 脸面：主窗口布局
-├─util/                      # 工具箱：设备匹配逻辑与日志配置
-└─tests/                     # 防翻车：协议层单元测试
+rust/
+├─ src/
+│  ├─ controller.rs          # 异步控制器与设备状态机
+│  ├─ models.rs              # 状态、模式和固件能力
+│  ├─ protocol.rs            # 协议编解码与流解析
+│  └─ transport/             # RFCOMM、串口 SPP 与设备发现
+├─ tests/                    # 协议测试
+└─ ui/app.slint              # Slint 原生界面
 ```
 
----
-
-## 🚀 快速开始
-
-### 1. 环境准备
-确保你用的是 **Windows 10/11**，安装了 **Python 3.11+**，并且耳机已经提前在系统设置里**配对成功**。
-
-### 2. 安装依赖
-```bash
-pip install -r requirements.txt
-```
-> **主要功臣**：`winsdk`（搞定 RFCOMM）、`pyserial`（搞定串口通信）。
-
-### 3. 启动
-```bash
-python main.py
-```
-点一下界面的“**自动连接**”，剩下的交给程序，你只管听歌。
-
----
-
-## 🎧 掌控一切
-
-### ANC 降噪
-支持从“普通”到“深度”的所有档位，甚至包括风噪抑制和试验性模式。
-
-### EQ 调音
-内置了那些耳熟能详的预设：
-* **悔恨之泪**（原道精髓）
-* 均衡中正 / 欧美澎湃 / 真律还原
-* 细腻佳音 / 温婉人声 / 游戏优化
-
-### 编码切换
-AAC、LHDC、SBC 随心切换（能不能切成功，得看你耳机的“身体素质”即固件版本）。
-
----
-
-## 🛠 开发碎碎念
-
-* **为什么要写测试？** 因为协议解析这块要是错了，调试起来真的会让人发疯。我写了完整的单元测试，涵盖了分包、粘包和各种查询指令。
-* **连接失败了？** 先检查耳机是不是已经连上系统了。如果 RFCOMM 挂了，程序会尝试串口。如果两个都挂了，请检查一下依赖包装好没。
-* **日志是个好东西**：如果你发现耳机不听使唤，去 `logs/desktop_gui.log` 看看，那里记录了所有“作案证据”。
-
----
-
-**最后：**
-这个项目纯粹是为了自用方便。如果你也是原道铁粉，希望它能让你在 Windows 上的体验稍微好那么一点点。
-
-**Happy Listening!** 🎧
-
-感谢开源项目：NiceHCK Controller https://github.com/ZaeXT/NiceHCK_Controller
+运行日志按天写入 `%LOCALAPPDATA%\NiceHCK Controller\logs\`。
