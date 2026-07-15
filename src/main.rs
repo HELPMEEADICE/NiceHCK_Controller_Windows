@@ -13,12 +13,15 @@ use nicehck_controller::controller::{
 use nicehck_controller::models::{AncMode, CodecMode, ConnectionState, DeviceState, EqMode};
 use slint::{ComponentHandle, SharedString};
 use tokio::runtime::Builder;
+#[cfg(debug_assertions)]
 use tracing::info;
 
 slint::include_modules!();
 
 fn main() -> Result<(), Box<dyn Error>> {
+    #[cfg(debug_assertions)]
     let (_log_guard, log_dir) = nicehck_controller::logging::initialize()?;
+    #[cfg(debug_assertions)]
     info!(path = %log_dir.display(), "NiceHCK Controller starting");
 
     let runtime = Builder::new_multi_thread()
