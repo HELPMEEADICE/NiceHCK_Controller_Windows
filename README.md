@@ -1,58 +1,36 @@
-# NiceHCK Controller
+# NiceHCK Controller Rust
 
-NiceHCK / 原道蓝牙耳机的 Windows 原生桌面控制器，使用 Rust 和 Slint 构建。
+NiceHCK Controller 的 Windows 原生 Rust 版本，使用 Slint 构建界面。
 
-## 功能
-
-- 自动发现已配对设备，优先使用原生 RFCOMM，失败后回退到串口 SPP
-- ANC、EQ、AAC/LHDC/SBC 编码切换
-- 游戏模式和低延迟模式
-- 左耳、右耳和充电盒电量显示
-- 根据固件版本限制不支持的 EQ 和编码选项
-- 收发数据与错误日志
-
-## 环境
+## 要求
 
 - Windows 10/11
 - Rust 1.85 或更新版本
-- 已在 Windows 设置中配对的 NiceHCK / 原道耳机
+- 已在 Windows 设置中配对的 NiceHCK / 原道蓝牙耳机
 
 ## 运行
 
 ```powershell
-cd rust
 cargo run
 ```
 
-## 构建
-
-```powershell
-cd rust
-cargo build --release
-```
-
-生成的程序位于 `rust/target/release/nicehck-controller.exe`。
+程序依次尝试目标 UUID 的 RFCOMM 服务和蓝牙串口 SPP。设备匹配关键字为 `YUANDAO`、`OriG`、`NiceHCK` 和 `Controller`。
 
 ## 验证
 
 ```powershell
-cd rust
 cargo fmt --check
 cargo clippy --all-targets -- -D warnings
 cargo test
+cargo build --release
 ```
 
-## 项目结构
+日志保存在 `%LOCALAPPDATA%\NiceHCK Controller\logs\`。设置 `RUST_LOG` 可调整日志级别，例如 `RUST_LOG=debug`。
 
-```text
-rust/
-├─ src/
-│  ├─ controller.rs          # 异步控制器与设备状态机
-│  ├─ models.rs              # 状态、模式和固件能力
-│  ├─ protocol.rs            # 协议编解码与流解析
-│  └─ transport/             # RFCOMM、串口 SPP 与设备发现
-├─ tests/                    # 协议测试
-└─ ui/app.slint              # Slint 原生界面
-```
+## 模块
 
-运行日志按天写入 `%LOCALAPPDATA%\NiceHCK Controller\logs\`。
+- `src/protocol.rs`：命令构造、流式数据包解析和状态响应解码
+- `src/models.rs`：设备状态、模式和固件能力
+- `src/transport/`：Windows RFCOMM、串口 SPP 和设备发现
+- `src/controller.rs`：单任务控制器状态机
+- `ui/app.slint`：原生桌面界面
